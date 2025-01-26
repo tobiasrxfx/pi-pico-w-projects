@@ -1,4 +1,4 @@
-C:/Users/trafa/OneDrive/Documentos/PiPicoW/semaforo_oled/build/CMakeFiles/display_oled.dir
+C:/Users/trafa/OneDrive/Documentos/PiPicoW/semaforo_oled/build/CMakeFiles/traffic_oled.dir
 C:/Users/trafa/OneDrive/Documentos/PiPicoW/semaforo_oled/build/CMakeFiles/edit_cache.dir
 C:/Users/trafa/OneDrive/Documentos/PiPicoW/semaforo_oled/build/CMakeFiles/rebuild_cache.dir
 C:/Users/trafa/OneDrive/Documentos/PiPicoW/semaforo_oled/build/pico-sdk/CMakeFiles/edit_cache.dir
