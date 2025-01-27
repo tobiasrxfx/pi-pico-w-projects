@@ -11,5 +11,19 @@ This is just a simple logic and for a more realistic scenario, one could adapt t
 without red light has stayed in this state for some seconds. Because in the way it is implemented the pedestrians could trick the traffic 
 and do not let any time the light be red, if the button is always pressed. 
 
-The display shows the following depending on which state the system is: 
+The display shows the following depending on which state the system is (messages are in portuguese): 
 
+Red: 
+
+<img src="images/red.png" alt="Red message" width="300" height="200">
+
+Yellow:
+
+<img src="images/yellow.png" alt="Red message" width="300" height="200">
+
+Green:
+
+<img src="images/green.png" alt="Red message" width="300" height="200">
+
+--
+Tobias on 26/01/2025
