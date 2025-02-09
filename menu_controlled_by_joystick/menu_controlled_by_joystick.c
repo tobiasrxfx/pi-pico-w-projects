@@ -63,11 +63,11 @@ int main() {
                 ssd1306_show(&disp);
 
                 if (adc_y_raw < ADC_MAX/4){
-                    actual_screen += 1;
+                    actual_screen = screen_2;
                 } else if (adc_y_raw > 3*ADC_MAX/4) {
-                    actual_screen -= 1;    
+                    actual_screen = screen_3;    
                 } else {
-                    actual_screen += 0;
+                    actual_screen = screen_1;
                 }
 
                 if(running) {
