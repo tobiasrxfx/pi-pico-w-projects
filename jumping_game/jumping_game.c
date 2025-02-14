@@ -30,21 +30,22 @@ int main()
 
     Player player = {10, GROUND_Y, 10, 10, 0, false};
     Obstacle obstacle_0 = {100, GROUND_Y, 6, 3, 4};
-    Obstacle obstacle_1 = {100, GROUND_Y+5, 3, 5, 1};
+    Obstacle obstacle_1 = {100, GROUND_Y+5, 3, 5, 2};
+
     int score_cnt = 0;
-    bool jumped = false; 
     char score_string[15];
+
+    intro_animation();
 
     while (true) {
 
         // Select JOY_Y as input 
         adc_select_input(0); 
         uint adc_y_raw = adc_read();
-
-        //ssd1306_draw_string(&disp, 10+24 , 10, 1,"CRIADO POR");
         
+        // Detect jump by taking the joystcick adc input
         if (adc_y_raw > 3*ADC_MAX/4){
-            jumped = jump(&player);
+            jump(&player);
         }
 
         // Update game objects
@@ -53,14 +54,24 @@ int main()
 
         // Draw everything on OLED
         draw_game(&player, &obstacle_1);
-
+        
         if(check_collision(&player, &obstacle_1)){
             ssd1306_draw_string(&disp, 50, 30 ,1, "GAME OVER");
             ssd1306_show(&disp);
-            sleep_ms(5000);
+            sleep_ms(2000);
             score_cnt = 0;
             ssd1306_clear(&disp); 
-        }else if(jumped == true){
+            ssd1306_show(&disp);
+
+            while(gpio_get(BTN_JOY_PIN)){
+                ssd1306_draw_string(&disp, 17, 20 ,1, "PRESS THE BUTTON");
+                ssd1306_draw_string(&disp, 17, 30 ,1, " TO PLAY AGAIN");
+                ssd1306_show(&disp);
+            }
+
+            reset_objects_positions(&player, &obstacle_1);
+            intro_animation();
+        }else if(obstacle_1.x == 128){
             score_cnt++;
             sprintf(score_string, "SCORE: %d", score_cnt);
             ssd1306_clear_square(&disp, 0,0,128, 30);
@@ -70,6 +81,14 @@ int main()
         
         //sleep_ms(20);
     }
+}
+
+void reset_objects_positions(Player *player, Obstacle *obstacle){
+    player->x = 10;
+    player->y = GROUND_Y;
+
+    obstacle ->x = 100;
+    obstacle ->y = GROUND_Y + 5;
 }
 
 void setup_gpios_ssd1603(void) {
@@ -95,15 +114,12 @@ void update_player(Player *player) {
 }
 
 // Function to make the player jump
-bool jump(Player *player) {
+void jump(Player *player) {
     if (!player->is_jumping) {  // Only allow jumping if on the ground
         player->is_jumping = true;
         player->velocity_y = JUMP_STRENGTH;
-        return true;
     }
-    return false;
 }
-
 
 
 void update_obstacle(Obstacle *obstacle) {
@@ -116,7 +132,6 @@ void update_obstacle(Obstacle *obstacle) {
 }
 
 
-
 void draw_game(Player *player, Obstacle *obstacle) {
 
     ssd1306_clear_square(&disp, 0, 0, 20, 30);
@@ -127,6 +142,9 @@ void draw_game(Player *player, Obstacle *obstacle) {
 
     // Draw obstacle
     ssd1306_draw_square(&disp, obstacle->x, obstacle->y, obstacle->width, obstacle->height);
+
+    // Draw score string
+    ssd1306_draw_string(&disp, 40, 10 ,1, "SCORE:");
     
 
     ssd1306_show(&disp);
@@ -138,4 +156,28 @@ bool check_collision(Player *player, Obstacle *obstacle) {
             player->x + player->width > obstacle->x &&    // Player's right edge is after obstacle's left edge
             player->y < obstacle->y + obstacle->height && // Player's top edge is above obstacle's bottom edge
             player->y + player->height > obstacle->y);    // Player's bottom edge is below obstacle's top edge
+}
+
+void intro_animation(void){
+
+    ssd1306_clear(&disp);
+    ssd1306_draw_string(&disp, 30, 15 ,1, "STARTING IN");
+    ssd1306_draw_string(&disp, 60, 30 ,2, "3");
+    ssd1306_show(&disp);
+    sleep_ms(750);
+    ssd1306_clear_square(&disp, 60,30,16,10);
+    ssd1306_draw_string(&disp, 60, 30 ,2, "2");
+    ssd1306_show(&disp);
+    sleep_ms(750);
+    ssd1306_clear_square(&disp, 60,30,16,10);
+    ssd1306_draw_string(&disp, 60, 30 ,2, "1");
+    ssd1306_show(&disp);
+    sleep_ms(750);
+    ssd1306_clear_square(&disp, 55, 30, 32,20);
+    ssd1306_draw_string(&disp, 55, 30 ,2, "GO");
+    ssd1306_show(&disp);
+    sleep_ms(750);
+
+    ssd1306_clear(&disp);
+    ssd1306_show(&disp);
 }

@@ -28,8 +28,11 @@ typedef struct {
 void setup_gpios_ssd1603(void);
 
 void update_player(Player *player);
-bool jump(Player *player);
+void jump(Player *player);
 void update_obstacle(Obstacle *obstacle);
+void reset_objects_positions(Player *player, Obstacle *obstacle);
 
 void draw_game(Player *player, Obstacle *obstacle);
 bool check_collision(Player *player, Obstacle *obstacle);
+
+void intro_animation(void);
