@@ -1,12 +1,13 @@
+// PINs used
 #define JOY_Y 26
 #define BTN_JOY_PIN 22 
-
-#define ADC_MAX 4095
-
+#define BUZZER_PIN 21
 #define I2C_SDA 14
 #define I2C_SCL 15
 
+#define ADC_MAX 4095
 
+// Game defines 
 #define GRAVITY 1.5      // Gravity force
 #define JUMP_STRENGTH -10 // Jump initial velocity
 #define GROUND_Y 40    // Ground level (adjust based on OLED screen)
@@ -26,13 +27,13 @@ typedef struct {
 
 // Functions definition 
 void setup_gpios_ssd1603(void);
-
 void update_player(Player *player);
 void jump(Player *player);
 void update_obstacle(Obstacle *obstacle);
 void reset_objects_positions(Player *player, Obstacle *obstacle);
-
 void draw_game(Player *player, Obstacle *obstacle);
 bool check_collision(Player *player, Obstacle *obstacle);
-
 void intro_animation(void);
+void init_buzzer(void);
+void set_tone(uint16_t frequency);
+void defeat_sound(void);

@@ -4,10 +4,12 @@
 #include "hardware/adc.h"
 #include "inc/ssd1306.h"
 #include "jumping_game.h"
+#include "hardware/pwm.h"
 
 
 // Create display struct for configuration 
 ssd1306_t disp;
+
 
 int main()
 {
@@ -35,7 +37,18 @@ int main()
     int score_cnt = 0;
     char score_string[15];
 
+    init_buzzer();
+
+    
+    // Waits for the user press the to start the game
+    while(gpio_get(BTN_JOY_PIN)){
+        ssd1306_draw_string(&disp, 17, 20 ,1, "PRESS THE BUTTON");
+        ssd1306_draw_string(&disp, 15, 30 ,1, "TO PLAY THE GAME");
+        ssd1306_show(&disp);
+    }
+
     intro_animation();
+
 
     while (true) {
 
@@ -56,13 +69,19 @@ int main()
         draw_game(&player, &obstacle_1);
         
         if(check_collision(&player, &obstacle_1)){
+
+
+
             ssd1306_draw_string(&disp, 50, 30 ,1, "GAME OVER");
             ssd1306_show(&disp);
+            defeat_sound();
             sleep_ms(2000);
             score_cnt = 0;
             ssd1306_clear(&disp); 
             ssd1306_show(&disp);
-
+            
+            
+            
             while(gpio_get(BTN_JOY_PIN)){
                 ssd1306_draw_string(&disp, 17, 20 ,1, "PRESS THE BUTTON");
                 ssd1306_draw_string(&disp, 17, 30 ,1, " TO PLAY AGAIN");
@@ -142,11 +161,7 @@ void draw_game(Player *player, Obstacle *obstacle) {
 
     // Draw obstacle
     ssd1306_draw_square(&disp, obstacle->x, obstacle->y, obstacle->width, obstacle->height);
-
-    // Draw score string
-    ssd1306_draw_string(&disp, 40, 10 ,1, "SCORE:");
     
-
     ssd1306_show(&disp);
 }
 
@@ -180,4 +195,40 @@ void intro_animation(void){
 
     ssd1306_clear(&disp);
     ssd1306_show(&disp);
+}
+
+void init_buzzer() {
+    gpio_set_function(BUZZER_PIN, GPIO_FUNC_PWM);
+    uint slice_num = pwm_gpio_to_slice_num(BUZZER_PIN);
+    pwm_set_clkdiv(slice_num, 4.0f); // Set clock divider
+    pwm_set_enabled(slice_num, true); // Keep PWM enabled
+}
+
+
+void set_tone(uint16_t frequency) {
+    if (frequency == 0) {
+        pwm_set_gpio_level(BUZZER_PIN, 0);  // Silence
+        return;
+    }
+
+    uint slice_num = pwm_gpio_to_slice_num(BUZZER_PIN);
+    uint16_t wrap = 125000000 / frequency - 1;
+    pwm_set_wrap(slice_num, wrap);
+    pwm_set_gpio_level(BUZZER_PIN, wrap / 2);  // 50% duty cycle
+}
+
+void defeat_sound() {
+    uint16_t tones[][2] = {
+        {660, 200},  // E5
+        {440, 200},  // A4
+        {330, 400},  // E4
+        {220, 600},  // A3 (deep note)
+    };
+
+    for (int i = 0; i < 4; i++) {
+        set_tone(tones[i][0]);
+        sleep_ms(tones[i][1]);
+    }
+
+    set_tone(0);  // Stop sound
 }
