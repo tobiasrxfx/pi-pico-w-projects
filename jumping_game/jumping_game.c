@@ -6,7 +6,6 @@
 #include "jumping_game.h"
 #include "hardware/pwm.h"
 
-
 // Create display struct for configuration 
 ssd1306_t disp;
 
@@ -30,15 +29,14 @@ int main()
     ssd1306_clear(&disp);
     disp.external_vcc=false;
 
-    Player player = {10, GROUND_Y, 10, 10, 0, false};
-    Obstacle obstacle_0 = {100, GROUND_Y, 6, 3, 4};
-    Obstacle obstacle_1 = {100, GROUND_Y+5, 3, 5, 2};
-
     int score_cnt = 0;
     char score_string[15];
 
     init_buzzer();
 
+    Player player = {10, GROUND_Y, 10, 10, 0, false};
+    Obstacle obstacle_0 = {100, GROUND_Y, 6, 3, 3};
+    Obstacle obstacle_1 = {100, GROUND_Y+5, 3, 5, 2};
     
     // Waits for the user press the to start the game
     while(gpio_get(BTN_JOY_PIN)){
@@ -52,6 +50,7 @@ int main()
 
     while (true) {
 
+        
         // Select JOY_Y as input 
         adc_select_input(0); 
         uint adc_y_raw = adc_read();
@@ -61,16 +60,16 @@ int main()
             jump(&player);
         }
 
-        // Update game objects
+        // Update player and the active obstacle
         update_player(&player);
+
         update_obstacle(&obstacle_1);
+        draw_game(&player, &obstacle_1);
 
         // Draw everything on OLED
-        draw_game(&player, &obstacle_1);
+        // draw_game(&player, &obstacle_1);
         
-        if(check_collision(&player, &obstacle_1)){
-
-
+        if (check_collision(&player, &obstacle_1)){
 
             ssd1306_draw_string(&disp, 50, 30 ,1, "GAME OVER");
             ssd1306_show(&disp);
@@ -80,8 +79,6 @@ int main()
             ssd1306_clear(&disp); 
             ssd1306_show(&disp);
             
-            
-            
             while(gpio_get(BTN_JOY_PIN)){
                 ssd1306_draw_string(&disp, 17, 20 ,1, "PRESS THE BUTTON");
                 ssd1306_draw_string(&disp, 17, 30 ,1, " TO PLAY AGAIN");
@@ -89,6 +86,7 @@ int main()
             }
 
             reset_objects_positions(&player, &obstacle_1);
+            reset_objects_positions(&player, &obstacle_0);
             intro_animation();
         }else if(obstacle_1.x == 128){
             score_cnt++;
@@ -97,6 +95,7 @@ int main()
             ssd1306_draw_string(&disp, 40, 10 ,1, score_string);
             ssd1306_show(&disp);
         }
+
         
         //sleep_ms(20);
     }
