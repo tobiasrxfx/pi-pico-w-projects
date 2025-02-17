@@ -57,6 +57,7 @@ target_link_libraries(jumping_game
         hardware_adc
         hardware_i2c
         hardware_gpio
+        hardware_pwm
         )
 
 pico_add_extra_outputs(jumping_game)

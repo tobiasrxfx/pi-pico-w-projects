@@ -4,10 +4,11 @@
 #include "hardware/adc.h"
 #include "inc/ssd1306.h"
 #include "jumping_game.h"
-
+#include "hardware/pwm.h"
 
 // Create display struct for configuration 
 ssd1306_t disp;
+
 
 int main()
 {
@@ -28,17 +29,28 @@ int main()
     ssd1306_clear(&disp);
     disp.external_vcc=false;
 
-    Player player = {10, GROUND_Y, 10, 10, 0, false};
-    Obstacle obstacle_0 = {100, GROUND_Y, 6, 3, 4};
-    Obstacle obstacle_1 = {100, GROUND_Y+5, 3, 5, 2};
-
     int score_cnt = 0;
     char score_string[15];
 
+    init_buzzer();
+
+    Player player = {10, GROUND_Y, 10, 10, 0, false};
+    Obstacle obstacle_0 = {100, GROUND_Y, 6, 3, 3};
+    Obstacle obstacle_1 = {100, GROUND_Y+5, 3, 5, 2};
+    
+    // Waits for the user press the to start the game
+    while(gpio_get(BTN_JOY_PIN)){
+        ssd1306_draw_string(&disp, 17, 20 ,1, "PRESS THE BUTTON");
+        ssd1306_draw_string(&disp, 15, 30 ,1, "TO PLAY THE GAME");
+        ssd1306_show(&disp);
+    }
+
     intro_animation();
+
 
     while (true) {
 
+        
         // Select JOY_Y as input 
         adc_select_input(0); 
         uint adc_y_raw = adc_read();
@@ -48,21 +60,25 @@ int main()
             jump(&player);
         }
 
-        // Update game objects
+        // Update player and the active obstacle
         update_player(&player);
+
         update_obstacle(&obstacle_1);
+        draw_game(&player, &obstacle_1);
 
         // Draw everything on OLED
-        draw_game(&player, &obstacle_1);
+        // draw_game(&player, &obstacle_1);
         
-        if(check_collision(&player, &obstacle_1)){
+        if (check_collision(&player, &obstacle_1)){
+
             ssd1306_draw_string(&disp, 50, 30 ,1, "GAME OVER");
             ssd1306_show(&disp);
+            defeat_sound();
             sleep_ms(2000);
             score_cnt = 0;
             ssd1306_clear(&disp); 
             ssd1306_show(&disp);
-
+            
             while(gpio_get(BTN_JOY_PIN)){
                 ssd1306_draw_string(&disp, 17, 20 ,1, "PRESS THE BUTTON");
                 ssd1306_draw_string(&disp, 17, 30 ,1, " TO PLAY AGAIN");
@@ -70,6 +86,7 @@ int main()
             }
 
             reset_objects_positions(&player, &obstacle_1);
+            reset_objects_positions(&player, &obstacle_0);
             intro_animation();
         }else if(obstacle_1.x == 128){
             score_cnt++;
@@ -78,6 +95,7 @@ int main()
             ssd1306_draw_string(&disp, 40, 10 ,1, score_string);
             ssd1306_show(&disp);
         }
+
         
         //sleep_ms(20);
     }
@@ -142,11 +160,7 @@ void draw_game(Player *player, Obstacle *obstacle) {
 
     // Draw obstacle
     ssd1306_draw_square(&disp, obstacle->x, obstacle->y, obstacle->width, obstacle->height);
-
-    // Draw score string
-    ssd1306_draw_string(&disp, 40, 10 ,1, "SCORE:");
     
-
     ssd1306_show(&disp);
 }
 
@@ -180,4 +194,40 @@ void intro_animation(void){
 
     ssd1306_clear(&disp);
     ssd1306_show(&disp);
+}
+
+void init_buzzer() {
+    gpio_set_function(BUZZER_PIN, GPIO_FUNC_PWM);
+    uint slice_num = pwm_gpio_to_slice_num(BUZZER_PIN);
+    pwm_set_clkdiv(slice_num, 4.0f); // Set clock divider
+    pwm_set_enabled(slice_num, true); // Keep PWM enabled
+}
+
+
+void set_tone(uint16_t frequency) {
+    if (frequency == 0) {
+        pwm_set_gpio_level(BUZZER_PIN, 0);  // Silence
+        return;
+    }
+
+    uint slice_num = pwm_gpio_to_slice_num(BUZZER_PIN);
+    uint16_t wrap = 125000000 / frequency - 1;
+    pwm_set_wrap(slice_num, wrap);
+    pwm_set_gpio_level(BUZZER_PIN, wrap / 2);  // 50% duty cycle
+}
+
+void defeat_sound() {
+    uint16_t tones[][2] = {
+        {660, 200},  // E5
+        {440, 200},  // A4
+        {330, 400},  // E4
+        {220, 600},  // A3 (deep note)
+    };
+
+    for (int i = 0; i < 4; i++) {
+        set_tone(tones[i][0]);
+        sleep_ms(tones[i][1]);
+    }
+
+    set_tone(0);  // Stop sound
 }
